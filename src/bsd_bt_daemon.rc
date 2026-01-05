@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# PROVIDE: bsd_bt_daemon
+# REQUIRE: DAEMON hcsecd
+# KEYWORD: shutdown
+#
+# Add the following line to /etc/rc.conf to enable bsd_bt_daemon:
+# bsd_bt_daemon_enable="YES"
+#
+# Configuration variables:
+# bsd_bt_daemon_user (str):	User to run the daemon as (default: root)
+# bsd_bt_daemon_script (str):	Path to the python script (default: /usr/local/libexec/bsd_bt/src/bt_daemon.py)
+
+. /etc/rc.subr
+
+name="bsd_bt_daemon"
+rcvar="bsd_bt_daemon_enable"
+
+load_rc_config $name
+
+: ${bsd_bt_daemon_enable:="NO"}
+: ${bsd_bt_daemon_user:="root"}
+: ${bsd_bt_daemon_script:="/usr/local/libexec/bsd_bt/src/bt_daemon.py"}
+
+# We use python3 directly
+command="/usr/local/bin/python3"
+command_args="${bsd_bt_daemon_script} &"
+
+# PID file handling
+pidfile="/var/run/${name}.pid"
+
+start_cmd="${name}_start"
+
+bsd_bt_daemon_start() {
+	if [ ! -f "${bsd_bt_daemon_script}" ]; then
+		echo "Error: ${bsd_bt_daemon_script} not found."
+		return 1
+	fi
+	
+	echo "Starting ${name}..."
+	/usr/sbin/daemon -u ${bsd_bt_daemon_user} -p ${pidfile} -f ${command} ${bsd_bt_daemon_script}
+}
+
+run_rc_command "$1"
