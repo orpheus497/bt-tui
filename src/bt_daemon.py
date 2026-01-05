@@ -27,6 +27,7 @@ import subprocess
 import signal
 import stat
 import argparse
+import re
 from utils import SOCKET_PATH, BUFFER_SIZE
 
 ##Step purpose: Define constants and global configurations for the daemon.
@@ -37,9 +38,7 @@ from utils import SOCKET_PATH, BUFFER_SIZE
 LOG_PATH = "/var/log/bt-tui-daemon.log"
 HCSECD_CONF_PATH = "/etc/bluetooth/hcsecd.conf"
 DEFAULT_HCI_DEVICE = "ubt0hci"
-
-# Global variable to store the configured HCI device
-hci_device = DEFAULT_HCI_DEVICE
+HCI_DEVICE_PATTERN = r'^ubt\d+hci$'  # Regex pattern for valid HCI device names (e.g., ubt0hci, ubt1hci)
 
 
 ##Function purpose: Set up logging configuration for the daemon.
@@ -149,13 +148,16 @@ def parse_inquiry_output(stdout_text):
 ##to discover nearby Bluetooth devices in discoverable mode.
 ##
 ##FreeBSD-Specific Details:
-##  - Uses the configured HCI node (default 'ubt0hci')
+##  - Uses the specified HCI node (e.g., 'ubt0hci')
 ##  - The inquiry command sends Bluetooth inquiry packets for ~10 seconds
 ##  - Results include MAC addresses of discovered devices
 ##  - Timeout set to 30 seconds to allow for slow/congested environments
 ##
+##Parameters:
+##  hci_device: The netgraph HCI device name (e.g., 'ubt0hci', 'ubt1hci')
+##
 ##Returns: Dictionary with status, optional message, and data (list of devices)
-def scan_devices():
+def scan_devices(hci_device):
     ##Action purpose: Execute hccontrol inquiry command to discover Bluetooth devices.
     ##Using subprocess.run with capture_output for clean stdout/stderr handling.
     try:
@@ -310,9 +312,10 @@ def restart_hcsecd_service():
 ##
 ##Parameters:
 ##  command_data: Dictionary containing the parsed JSON request
+##  hci_device: The netgraph HCI device name to use for operations
 ##
 ##Returns: Dictionary response with status and relevant data/message
-def handle_command(command_data):
+def handle_command(command_data, hci_device):
     ##Step purpose: Extract action from the command data.
     ##Default to empty string if action key is missing.
     action = command_data.get("action", "")
@@ -323,7 +326,7 @@ def handle_command(command_data):
     ##Condition purpose: Route to scan handler for device discovery.
     if action == "scan":
         ##Action purpose: Execute device scan and return results.
-        return scan_devices()
+        return scan_devices(hci_device)
     
     ##Condition purpose: Route to pair handler for device pairing.
     elif action == "pair":
@@ -368,7 +371,8 @@ def handle_command(command_data):
 ##
 ##Parameters:
 ##  client_socket: Connected socket object for the client
-def handle_client_connection(client_socket):
+##  hci_device: The netgraph HCI device name to use for operations
+def handle_client_connection(client_socket, hci_device):
     ##Error purpose: Ensure proper cleanup of client socket on exit.
     try:
         ##Step purpose: Receive data from client socket.
@@ -398,7 +402,7 @@ def handle_client_connection(client_socket):
             return
         
         ##Step purpose: Process the command and generate response.
-        response = handle_command(request)
+        response = handle_command(request, hci_device)
         
         ##Step purpose: Send response back to client.
         ##JSON encoding ensures consistent format, UTF-8 for transmission.
@@ -438,7 +442,7 @@ def cleanup_socket(signum=None, frame=None):
 
 ##Function purpose: Initialize and run the main socket server loop.
 ##This is the daemon's entry point that:
-##  1. parses command line arguments
+##  1. Parses command line arguments
 ##  2. Initializes logging
 ##  3. Verifies root privileges
 ##  4. Sets up signal handlers for graceful shutdown
@@ -450,7 +454,6 @@ def cleanup_socket(signum=None, frame=None):
 def main():
     ##Step purpose: Parse command line arguments.
     ##Allows configuration of the HCI device (e.g., ubt0hci, ubt1hci).
-    global hci_device
     parser = argparse.ArgumentParser(description="FreeBSD Bluetooth TUI Daemon")
     parser.add_argument(
         "--device", 
@@ -463,6 +466,12 @@ def main():
     ##Step purpose: Set up logging before any other operations.
     ##This ensures all subsequent messages are properly logged.
     setup_logging()
+    
+    ##Step purpose: Validate device name format.
+    ##Check if the device follows expected naming convention (e.g., ubt0hci, ubt1hci).
+    ##Logs a warning if the format doesn't match, but allows custom names.
+    if not re.match(HCI_DEVICE_PATTERN, hci_device):
+        logging.warning(f"Device name '{hci_device}' doesn't match expected format 'ubtNhci'. Proceeding anyway.")
 
     ##Step purpose: Log the startup configuration.
     logging.info(f"Starting bsd-bt-daemon using HCI device: {hci_device}")
@@ -515,7 +524,7 @@ def main():
             
             ##Action purpose: Process the client request.
             ##Each connection is handled synchronously (one at a time).
-            handle_client_connection(client_socket)
+            handle_client_connection(client_socket, hci_device)
     
     ##Error purpose: Handle any errors during socket operations.
     except Exception as e:

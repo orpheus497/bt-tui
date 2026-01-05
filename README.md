@@ -89,7 +89,7 @@ If you prefer to install manually:
 You can configure the daemon in `/etc/rc.conf`. For example, to use a different HCI device (default is `ubt0hci`):
 
 ```bash
-sysrc bsd_bt_daemon_flags="--device ubt1hci"
+sudo sysrc bsd_bt_daemon_flags="--device ubt1hci"
 ```
 
 To uninstall:
