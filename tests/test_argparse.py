@@ -25,7 +25,6 @@ import os
 from unittest.mock import patch, MagicMock
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 
@@ -103,7 +102,8 @@ class TestArgparse(unittest.TestCase):
     ##Method purpose: Test device name validation for valid format.
     ##Verifies that valid device names (ubt0hci, ubt1hci, etc.) pass validation.
     def test_device_validation_valid(self):
-        ##Step purpose: Test regex validation for valid device names.
+        ##Step purpose: Import the pattern constant from bt_daemon.
+        from bt_daemon import HCI_DEVICE_PATTERN
         import re
         
         ##Step purpose: Define valid device names following ubtNhci pattern.
@@ -114,14 +114,15 @@ class TestArgparse(unittest.TestCase):
             ##Assertion purpose: Verify device matches expected pattern.
             ##Pattern should match ubt followed by digits followed by hci.
             self.assertTrue(
-                re.match(r'^ubt\d+hci$', device),
+                re.match(HCI_DEVICE_PATTERN, device),
                 f"Device '{device}' should match pattern"
             )
 
     ##Method purpose: Test device name validation for invalid format.
     ##Verifies that invalid device names don't match the expected pattern.
     def test_device_validation_invalid(self):
-        ##Step purpose: Test regex validation for invalid device names.
+        ##Step purpose: Import the pattern constant from bt_daemon.
+        from bt_daemon import HCI_DEVICE_PATTERN
         import re
         
         ##Step purpose: Define invalid device names that don't follow pattern.
@@ -132,7 +133,7 @@ class TestArgparse(unittest.TestCase):
             ##Assertion purpose: Verify device doesn't match expected pattern.
             ##These should be rejected (or at least flagged with warning).
             self.assertFalse(
-                re.match(r'^ubt\d+hci$', device),
+                re.match(HCI_DEVICE_PATTERN, device),
                 f"Device '{device}' should not match pattern"
             )
 

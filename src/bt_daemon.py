@@ -38,6 +38,7 @@ from utils import SOCKET_PATH, BUFFER_SIZE
 LOG_PATH = "/var/log/bt-tui-daemon.log"
 HCSECD_CONF_PATH = "/etc/bluetooth/hcsecd.conf"
 DEFAULT_HCI_DEVICE = "ubt0hci"
+HCI_DEVICE_PATTERN = r'^ubt\d+hci$'  # Regex pattern for valid HCI device names (e.g., ubt0hci, ubt1hci)
 
 
 ##Function purpose: Set up logging configuration for the daemon.
@@ -469,7 +470,7 @@ def main():
     ##Step purpose: Validate device name format.
     ##Check if the device follows expected naming convention (e.g., ubt0hci, ubt1hci).
     ##Logs a warning if the format doesn't match, but allows custom names.
-    if not re.match(r'^ubt\d+hci$', hci_device):
+    if not re.match(HCI_DEVICE_PATTERN, hci_device):
         logging.warning(f"Device name '{hci_device}' doesn't match expected format 'ubtNhci'. Proceeding anyway.")
 
     ##Step purpose: Log the startup configuration.
