@@ -440,6 +440,27 @@ def cleanup_socket(signum=None, frame=None):
     ##Exit code 0 indicates normal termination.
     sys.exit(0)
 
+##Function purpose: Create and configure the argument parser for the daemon.
+##This factory function centralizes the ArgumentParser setup so it can be reused
+##by both the main() function and unit tests. This ensures tests exercise the
+##real parser configuration rather than duplicating setup logic.
+##
+##Returns: Configured ArgumentParser instance with --device option
+def create_arg_parser():
+    ##Step purpose: Create ArgumentParser with daemon description.
+    parser = argparse.ArgumentParser(description="FreeBSD Bluetooth TUI Daemon")
+    
+    ##Step purpose: Add --device argument for HCI device selection.
+    ##Allows users to specify which Bluetooth adapter to use (e.g., ubt0hci, ubt1hci).
+    parser.add_argument(
+        "--device", 
+        default=DEFAULT_HCI_DEVICE,
+        help=f"Netgraph HCI node name (default: {DEFAULT_HCI_DEVICE})"
+    )
+    
+    ##Return purpose: Provide configured parser to caller.
+    return parser
+
 ##Function purpose: Initialize and run the main socket server loop.
 ##This is the daemon's entry point that:
 ##  1. Parses command line arguments
@@ -454,12 +475,7 @@ def cleanup_socket(signum=None, frame=None):
 def main():
     ##Step purpose: Parse command line arguments.
     ##Allows configuration of the HCI device (e.g., ubt0hci, ubt1hci).
-    parser = argparse.ArgumentParser(description="FreeBSD Bluetooth TUI Daemon")
-    parser.add_argument(
-        "--device", 
-        default=DEFAULT_HCI_DEVICE,
-        help=f"Netgraph HCI node name (default: {DEFAULT_HCI_DEVICE})"
-    )
+    parser = create_arg_parser()
     args = parser.parse_args()
     hci_device = args.device
 

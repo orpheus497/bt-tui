@@ -34,7 +34,7 @@ uninstall:
 	@echo "Removing Python package..."
 	@if [ -f install_files.txt ]; then \
 		while IFS= read -r file; do \
-			[ -n "$$file" ] && rm -rf "$$file"; \
+			[ -n "$$file" ] && rm -rf -- "$$file"; \
 		done < install_files.txt; \
 		rm install_files.txt; \
 	else \

@@ -38,7 +38,7 @@ bsd_bt_daemon_start() {
 	
 	echo "Starting ${name}..."
 	# Run with daemon utility to background it and handle PID file
-	/usr/sbin/daemon -u ${bsd_bt_daemon_user} -p ${pidfile} -f ${command} "${bsd_bt_daemon_flags}"
+	/usr/sbin/daemon -u "${bsd_bt_daemon_user}" -p "${pidfile}" -f "${command}" ${bsd_bt_daemon_flags}
 }
 
 run_rc_command "$1"
