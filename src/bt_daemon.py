@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ##Script function and purpose: FreeBSD Bluetooth Daemon.
 ##This script serves as the privileged backend for the bt-tui Bluetooth management system.
 ##It runs as root to interface with FreeBSD's native Bluetooth stack, which includes:
@@ -14,7 +15,7 @@
 ##
 ##FreeBSD-Specific Notes:
 ##  - Requires ng_ubt kernel module loaded for USB Bluetooth adapters
-##  - Uses ubt0hci as the default HCI device name (configurable)
+##  - Uses ubt0hci as the default HCI device name (configurable via --device)
 ##  - Manages /etc/bluetooth/hcsecd.conf for persistent pairing information
 
 import os
@@ -25,6 +26,7 @@ import logging
 import subprocess
 import signal
 import stat
+import argparse
 from utils import SOCKET_PATH, BUFFER_SIZE
 
 ##Step purpose: Define constants and global configurations for the daemon.
@@ -34,6 +36,10 @@ from utils import SOCKET_PATH, BUFFER_SIZE
 ##  - /etc/bluetooth/ for Bluetooth configuration (FreeBSD standard location)
 LOG_PATH = "/var/log/bt-tui-daemon.log"
 HCSECD_CONF_PATH = "/etc/bluetooth/hcsecd.conf"
+DEFAULT_HCI_DEVICE = "ubt0hci"
+
+# Global variable to store the configured HCI device
+hci_device = DEFAULT_HCI_DEVICE
 
 
 ##Function purpose: Set up logging configuration for the daemon.
@@ -143,7 +149,7 @@ def parse_inquiry_output(stdout_text):
 ##to discover nearby Bluetooth devices in discoverable mode.
 ##
 ##FreeBSD-Specific Details:
-##  - Uses 'ubt0hci' as the default HCI node name (created by ng_ubt driver)
+##  - Uses the configured HCI node (default 'ubt0hci')
 ##  - The inquiry command sends Bluetooth inquiry packets for ~10 seconds
 ##  - Results include MAC addresses of discovered devices
 ##  - Timeout set to 30 seconds to allow for slow/congested environments
@@ -154,10 +160,11 @@ def scan_devices():
     ##Using subprocess.run with capture_output for clean stdout/stderr handling.
     try:
         ##Step purpose: Call hccontrol with inquiry subcommand.
-        ##-n ubt0hci specifies the netgraph node name for the HCI device.
+        ##-n <hci_device> specifies the netgraph node name for the HCI device.
         ##timeout=30 prevents hanging if Bluetooth stack is unresponsive.
+        logging.info(f"Scanning on device: {hci_device}")
         result = subprocess.run(
-            ['hccontrol', '-n', 'ubt0hci', 'inquiry'],
+            ['hccontrol', '-n', hci_device, 'inquiry'],
             capture_output=True,
             text=True,
             timeout=30
@@ -431,18 +438,34 @@ def cleanup_socket(signum=None, frame=None):
 
 ##Function purpose: Initialize and run the main socket server loop.
 ##This is the daemon's entry point that:
-##  1. Initializes logging
-##  2. Verifies root privileges
-##  3. Sets up signal handlers for graceful shutdown
-##  4. Creates and binds the Unix Domain Socket
-##  5. Enters the main accept/handle loop
+##  1. parses command line arguments
+##  2. Initializes logging
+##  3. Verifies root privileges
+##  4. Sets up signal handlers for graceful shutdown
+##  5. Creates and binds the Unix Domain Socket
+##  6. Enters the main accept/handle loop
 ##
 ##The daemon runs indefinitely until terminated by signal (SIGINT/SIGTERM)
 ##or an unrecoverable error occurs.
 def main():
+    ##Step purpose: Parse command line arguments.
+    ##Allows configuration of the HCI device (e.g., ubt0hci, ubt1hci).
+    global hci_device
+    parser = argparse.ArgumentParser(description="FreeBSD Bluetooth TUI Daemon")
+    parser.add_argument(
+        "--device", 
+        default=DEFAULT_HCI_DEVICE,
+        help=f"Netgraph HCI node name (default: {DEFAULT_HCI_DEVICE})"
+    )
+    args = parser.parse_args()
+    hci_device = args.device
+
     ##Step purpose: Set up logging before any other operations.
     ##This ensures all subsequent messages are properly logged.
     setup_logging()
+
+    ##Step purpose: Log the startup configuration.
+    logging.info(f"Starting bsd-bt-daemon using HCI device: {hci_device}")
 
     ##Step purpose: Verify root privileges before starting.
     ##Exit early if not root to avoid confusing errors later.
