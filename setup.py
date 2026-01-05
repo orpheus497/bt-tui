@@ -7,7 +7,7 @@ setup(
     author="Orpheus497",
     author_email="example@example.com",
     url="https://github.com/example/bsd-bt",
-    packages=find_packages(where="src"),
+    py_modules=["bt_tui", "bt_daemon", "utils"],
     package_dir={"": "src"},
     install_requires=[
         "textual>=0.47.1",
