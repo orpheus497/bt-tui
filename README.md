@@ -47,43 +47,59 @@ This project is licensed under the **GNU General Public License v3 (GPLv3)**. Se
 
 ## Installation & Distribution
 
-### Standard Installation
+### Quick Install (Makefile)
 
-The project includes a `setup.py` for standard Python installation.
+The easiest way to install is using the provided `Makefile`, which handles the Python package installation and FreeBSD service setup automatically.
 
 ```bash
 # Clone and enter directory
 git clone <repository-url> bt-tui
 cd bt-tui
 
-# Install globally or in a venv
-sudo python3 setup.py install
+# Install package and rc script
+sudo make install
+
+# Enable and start the service
+sudo sysrc bsd_bt_daemon_enable="YES"
+sudo service bsd_bt_daemon start
 ```
 
-This installs two commands:
-- `bsd-bt-tui`: The terminal user interface.
-- `bsd-bt-daemon`: The background management daemon.
+### Manual Installation
 
-### FreeBSD Service Integration (rc.d)
+If you prefer to install manually:
 
-To run the daemon as a system service, use the provided `rc.d` script.
+1.  **Install Python Package:**
 
-1.  **Copy the script:**
+    ```bash
+    sudo python3 setup.py install
+    ```
+
+2.  **Install Service Script:**
+
     ```bash
     sudo cp src/bsd_bt_daemon.rc /usr/local/etc/rc.d/bsd_bt_daemon
     sudo chmod +x /usr/local/etc/rc.d/bsd_bt_daemon
     ```
 
-2.  **Enable the service:**
-    Add to `/etc/rc.conf`:
+3.  **Enable Service:**
+
     ```bash
-    bsd_bt_daemon_enable="YES"
+    sudo sysrc bsd_bt_daemon_enable="YES"
     ```
 
-3.  **Start the service:**
-    ```bash
-    sudo service bsd_bt_daemon start
-    ```
+### Configuration (Optional)
+
+You can configure the daemon in `/etc/rc.conf`. For example, to use a different HCI device (default is `ubt0hci`):
+
+```bash
+sudo sysrc bsd_bt_daemon_flags="--device ubt1hci"
+```
+
+To uninstall:
+
+```bash
+sudo make uninstall
+```
 
 ---
 

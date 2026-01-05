@@ -9,7 +9,7 @@
 #
 # Configuration variables:
 # bsd_bt_daemon_user (str):	User to run the daemon as (default: root)
-# bsd_bt_daemon_script (str):	Path to the python script (default: /usr/local/libexec/bsd_bt/src/bt_daemon.py)
+# bsd_bt_daemon_flags (str):	Flags to pass to the daemon (e.g., "--device ubt0hci")
 
 . /etc/rc.subr
 
@@ -20,11 +20,10 @@ load_rc_config $name
 
 : ${bsd_bt_daemon_enable:="NO"}
 : ${bsd_bt_daemon_user:="root"}
-: ${bsd_bt_daemon_script:="/usr/local/libexec/bsd_bt/src/bt_daemon.py"}
+: ${bsd_bt_daemon_flags:=""}
 
-# We use python3 directly
-command="/usr/local/bin/python3"
-command_args="${bsd_bt_daemon_script} &"
+# Using the entry point installed by pip/setup.py
+command="/usr/local/bin/bsd-bt-daemon"
 
 # PID file handling
 pidfile="/var/run/${name}.pid"
@@ -32,13 +31,14 @@ pidfile="/var/run/${name}.pid"
 start_cmd="${name}_start"
 
 bsd_bt_daemon_start() {
-	if [ ! -f "${bsd_bt_daemon_script}" ]; then
-		echo "Error: ${bsd_bt_daemon_script} not found."
+	if [ ! -x "${command}" ]; then
+		echo "Error: ${command} not found or not executable."
 		return 1
 	fi
 	
 	echo "Starting ${name}..."
-	/usr/sbin/daemon -u ${bsd_bt_daemon_user} -p ${pidfile} -f ${command} ${bsd_bt_daemon_script}
+	# Run with daemon utility to background it and handle PID file
+	/usr/sbin/daemon -u "${bsd_bt_daemon_user}" -p "${pidfile}" -f "${command}" ${bsd_bt_daemon_flags}
 }
 
 run_rc_command "$1"
