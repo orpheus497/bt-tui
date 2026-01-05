@@ -141,7 +141,6 @@ sdpd_enable="YES"
 
 ## Development & Privacy
 
-- **Private Documentation**: The `.devdocs/` folder contains internal development notes and session history. This folder is excluded from git via `.gitignore`.
 - **FOSS Compliance**: This project is 100% Free and Open Source, released under the GPLv3.
 
 ---
