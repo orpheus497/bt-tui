@@ -1,0 +1,5 @@
+/usr/local/lib/python3.11/site-packages/bsd_bt-0.1.0-py3.11.egg
+/usr/local/bin/bsd-bt-daemon
+/usr/local/bin/bsd-bt-tui
+/usr/local/bin/markdown-it
+/usr/local/bin/pygmentize
