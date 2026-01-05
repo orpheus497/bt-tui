@@ -27,6 +27,7 @@ import subprocess
 import signal
 import stat
 import argparse
+import re
 from utils import SOCKET_PATH, BUFFER_SIZE
 
 ##Step purpose: Define constants and global configurations for the daemon.
@@ -463,6 +464,12 @@ def main():
     ##Step purpose: Set up logging before any other operations.
     ##This ensures all subsequent messages are properly logged.
     setup_logging()
+    
+    ##Step purpose: Validate device name format.
+    ##Check if the device follows expected naming convention (e.g., ubt0hci, ubt1hci).
+    ##Logs a warning if the format doesn't match, but allows custom names.
+    if not re.match(r'^ubt\d+hci$', hci_device):
+        logging.warning(f"Device name '{hci_device}' doesn't match expected format 'ubtNhci'. Proceeding anyway.")
 
     ##Step purpose: Log the startup configuration.
     logging.info(f"Starting bsd-bt-daemon using HCI device: {hci_device}")
