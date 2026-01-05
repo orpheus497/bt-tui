@@ -438,7 +438,7 @@ def cleanup_socket(signum=None, frame=None):
 
 ##Function purpose: Initialize and run the main socket server loop.
 ##This is the daemon's entry point that:
-##  1. parses command line arguments
+##  1. Parses command line arguments
 ##  2. Initializes logging
 ##  3. Verifies root privileges
 ##  4. Sets up signal handlers for graceful shutdown

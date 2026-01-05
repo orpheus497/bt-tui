@@ -33,7 +33,9 @@ uninstall:
 	rm -f $(RCDIR)/$(RC_TARGET)
 	@echo "Removing Python package..."
 	@if [ -f install_files.txt ]; then \
-		cat install_files.txt | xargs rm -rf; \
+		while IFS= read -r file; do \
+			[ -n "$$file" ] && rm -rf "$$file"; \
+		done < install_files.txt; \
 		rm install_files.txt; \
 	else \
 		echo "Warning: install_files.txt not found. Pip uninstall recommended."; \
