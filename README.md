@@ -69,17 +69,20 @@ sudo service bsd_bt_daemon start
 If you prefer to install manually:
 
 1.  **Install Python Package:**
+
     ```bash
     sudo python3 setup.py install
     ```
 
 2.  **Install Service Script:**
+
     ```bash
     sudo cp src/bsd_bt_daemon.rc /usr/local/etc/rc.d/bsd_bt_daemon
     sudo chmod +x /usr/local/etc/rc.d/bsd_bt_daemon
     ```
 
 3.  **Enable Service:**
+
     ```bash
     sudo sysrc bsd_bt_daemon_enable="YES"
     ```
@@ -93,6 +96,7 @@ sudo sysrc bsd_bt_daemon_flags="--device ubt1hci"
 ```
 
 To uninstall:
+
 ```bash
 sudo make uninstall
 ```

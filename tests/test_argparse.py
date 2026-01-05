@@ -39,7 +39,7 @@ class TestArgparse(unittest.TestCase):
         from bt_daemon import scan_devices
         
         ##Step purpose: Mock subprocess.run to avoid actual hccontrol execution.
-        with patch('subprocess.run') as mock_run:
+        with patch('bt_daemon.subprocess.run') as mock_run:
             ##Step purpose: Configure mock to return successful result.
             mock_result = MagicMock()
             mock_result.returncode = 0
@@ -67,14 +67,14 @@ class TestArgparse(unittest.TestCase):
         ##Step purpose: Import constants after path is set.
         from bt_daemon import scan_devices, DEFAULT_HCI_DEVICE
         
-        with patch('subprocess.run') as mock_run:
+        with patch('bt_daemon.subprocess.run') as mock_run:
             mock_result = MagicMock()
             mock_result.returncode = 0
             mock_result.stdout = "00:11:22:33:44:55"
             mock_run.return_value = mock_result
             
             ##Action purpose: Call scan_devices with default device.
-            result = scan_devices(DEFAULT_HCI_DEVICE)
+            scan_devices(DEFAULT_HCI_DEVICE)
             
             ##Assertion purpose: Verify subprocess.run was called with default device.
             mock_run.assert_called_once()
@@ -94,7 +94,7 @@ class TestArgparse(unittest.TestCase):
             ##Action purpose: Call handle_command with scan action.
             custom_device = 'ubt2hci'
             command_data = {"action": "scan"}
-            result = handle_command(command_data, custom_device)
+            handle_command(command_data, custom_device)
             
             ##Assertion purpose: Verify scan_devices was called with correct device.
             mock_scan.assert_called_once_with(custom_device)
@@ -140,17 +140,12 @@ class TestArgparse(unittest.TestCase):
     ##Method purpose: Test argparse accepts --device argument.
     ##Verifies that ArgumentParser correctly handles the --device flag.
     def test_argparse_accepts_device_flag(self):
-        ##Step purpose: Test ArgumentParser configuration.
-        import argparse
-        from bt_daemon import DEFAULT_HCI_DEVICE
+        ##Step purpose: Test ArgumentParser configuration using factory function.
+        from bt_daemon import create_arg_parser, DEFAULT_HCI_DEVICE
         
-        ##Step purpose: Create parser with same configuration as main().
-        parser = argparse.ArgumentParser(description="FreeBSD Bluetooth TUI Daemon")
-        parser.add_argument(
-            "--device",
-            default=DEFAULT_HCI_DEVICE,
-            help=f"Netgraph HCI node name (default: {DEFAULT_HCI_DEVICE})"
-        )
+        ##Step purpose: Create parser using the factory function from bt_daemon.
+        ##This ensures tests exercise the real parser implementation.
+        parser = create_arg_parser()
         
         ##Test purpose: Parse args with no flags (should use default).
         args = parser.parse_args([])
